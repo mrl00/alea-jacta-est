@@ -1,6 +1,6 @@
 [package]
 name = "alea-jact-est"
-version = "1.2.0"
+version = "0.1.0"
 edition = "2024"
 description = "random string generator"
 repository = "https://github.com/mrl00/alea-jact-est"
