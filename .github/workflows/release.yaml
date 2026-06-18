@@ -1,0 +1,72 @@
+name: Build and Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+env:
+  BINARY_NAME: alea-jact-est
+
+jobs:
+  build:
+    name: Build for ${{ matrix.job.target }}
+    runs-on: ${{ matrix.job.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        job:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: alea-jact-est-linux
+            use_cross: false
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: alea-jact-est-windows.exe
+            use_cross: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.job.target }}
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.job.target }}
+
+      - name: Install cross
+        if: matrix.job.use_cross == true
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build Release Binary
+        run: |
+          if [ "${{ matrix.job.use_cross }}" = "true" ]; then
+            cross build --release --target ${{ matrix.job.target }} --bin ${{ env.BINARY_NAME }}
+          else
+            cargo build --release --target ${{ matrix.job.target }} --bin ${{ env.BINARY_NAME }}
+          fi
+        shell: bash
+
+      - name: Prepare Artifact
+        shell: bash
+        run: |
+          if [ "${{ matrix.job.os }}" = "windows-latest" ]; then
+            cp target/${{ matrix.job.target }}/release/${{ env.BINARY_NAME }}.exe ./${{ matrix.job.artifact_name }}
+          else
+            cp target/${{ matrix.job.target }}/release/${{ env.BINARY_NAME }} ./${{ matrix.job.artifact_name }}
+          fi
+
+      - name: Upload Binary to Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.job.artifact_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

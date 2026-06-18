@@ -1,0 +1,17 @@
+[package]
+name = "alea-jact-est"
+version = "1.2.0"
+edition = "2024"
+description = "random string generator"
+repository = "https://github.com/mrl00/alea-jact-est"
+license = "MIT"
+
+[[bin]]
+name = "aje"
+path = "src/main.rs"
+
+
+[dependencies]
+clap = { version = "4.6.1", features = ["derive"] }
+rand = { version = "0.10.1", features = ["std_rng", "thread_rng", "sys_rng"] }
+thiserror = { version = "2.0.18", features = ["std"] }
